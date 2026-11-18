@@ -1,32 +1,190 @@
-# React + TypeScript + Vite
+# Gestor de Tareas
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Aplicación web SPA para que los empleados de una pequeña empresa gestionen sus tareas diarias de forma organizada, persistente y accesible desde cualquier dispositivo.
 
-Currently, two official plugins are available:
+**🔗 Producción:** https://gestor-de-tareas-sooty.vercel.app
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Proyecto Integrador del Módulo 4 (Full Stack) — caso MateCode.
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Funcionalidades
 
-## Expanding the Oxlint configuration
+- **Autenticación:** registro e inicio de sesión con correo y contraseña o con Google, cierre de sesión y mensajes de error claros en español.
+- **Rutas protegidas:** sin sesión no se puede acceder a `/tasks`; con sesión no se muestran login ni registro.
+- **CRUD de tareas:** crear (título + descripción), listar, editar, eliminar (con confirmación) y marcar como completada.
+- **Persistencia por usuario:** las tareas se guardan en Cloud Firestore y cada usuario solo ve las suyas.
+- **Actualización en tiempo real:** la lista se actualiza sola después de cada operación.
+- **Resumen por email:** un botón envía al correo del usuario el estado de todas sus tareas mediante AWS SES.
+- **Estados de carga y errores** en formularios, lista y envío de email.
+- **Diseño responsive** con enfoque mobile first.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## Stack
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+| Capa | Tecnología |
+|---|---|
+| Frontend | React 19 + TypeScript + Vite |
+| Enrutamiento | React Router |
+| Autenticación | Firebase Authentication |
+| Base de datos | Cloud Firestore |
+| Email | AWS SES (SDK v2) desde una Vercel Function |
+| Deploy | Vercel |
+| Testing | Vitest + React Testing Library |
+
+## Estructura del proyecto
+
+```
+├─ api/                       # Vercel Functions (servidor)
+│  ├─ send-summary.ts         # POST /api/send-summary → envía el email con SES
+│  └─ _lib/                   # Código auxiliar (el "_" evita que Vercel lo publique como endpoint)
+├─ src/
+│  ├─ pages/                  # Vistas: Login, Register, Tasks
+│  ├─ components/             # UI: TodoForm, TodoList, TodoItem, LoadingScreen
+│  ├─ routes/                 # ProtectedRoute y PublicOnlyRoute
+│  ├─ hooks/                  # useAuth, useTasks
+│  ├─ context/                # Contexto y proveedor de autenticación
+│  ├─ services/               # Integraciones: Firebase, Auth, Firestore, email
+│  ├─ types/                  # Tipos e interfaces compartidas
+│  └─ utils/                  # Funciones puras: validación, orden, resumen
+├─ tests/                     # Tests unitarios, de componentes y de servicios (con mocks)
+├─ firestore.rules            # Reglas de seguridad de Firestore
+├─ vercel.json                # Rewrites para la SPA
+├─ .env.example               # Plantilla de variables de entorno (sin secretos)
+└─ README.md
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Decisiones arquitectónicas
+
+- **Separación por capas.** Los componentes no hablan directamente con Firebase: usan *hooks* (`useAuth`, `useTasks`), que a su vez usan *services*. Si mañana cambia el proveedor (por ejemplo, otra base de datos), solo se modifica la capa de servicios.
+- **Funciones puras en `utils/`.** La validación, el orden y el resumen de tareas no dependen de React ni de Firebase, así que son fáciles de probar y de reutilizar.
+- **Sesión con Context API.** `AuthProvider` escucha `onAuthStateChanged` y comparte el usuario con toda la app. Las rutas reaccionan solas a los cambios de sesión, por lo que las páginas no necesitan redirigir manualmente.
+- **Tiempo real con `onSnapshot`.** En lugar de volver a pedir los datos después de cada operación, la app se suscribe a la consulta de Firestore y la interfaz se actualiza automáticamente.
+- **Seguridad en el servidor.** Las reglas de Firestore (`firestore.rules`) verifican que `userId` coincida con el usuario autenticado para leer, crear, editar o borrar, y validan la forma de cada tarea. El filtro por `userId` en el frontend no es la única protección.
+- **Carpeta `api/` en lugar de `functions/`.** Vercel solo detecta funciones dentro de `api/`, por eso el endpoint de email vive ahí.
+- **El endpoint de email no confía en el navegador.** El frontend envía el *ID token* de Firebase; la función lo verifica con las llaves públicas de Google (librería `jose`) y envía el correo únicamente a la dirección que contiene el token. Así nadie puede usar el endpoint para enviar correos a terceros.
+- **Imports con extensión `.js` en `api/`.** El proyecto usa `"type": "module"`, y Node.js en modo ES Modules exige la extensión en los imports locales.
+
+## Flujo de envío de emails
+
+```
+[Navegador]                       [Vercel Function]                   [AWS]
+ Botón "Enviarme resumen"
+   │ 1. Obtiene el ID token de Firebase
+   │ 2. POST /api/send-summary
+   │    Authorization: Bearer <token>
+   │    Body: { tasks: [{ title, completed }] }
+   └──────────────────────────────▶ 3. Verifica el token (firma, emisor,
+                                       audiencia y expiración)
+                                    4. Valida los datos recibidos
+                                    5. Arma el email (HTML + texto,
+                                       con escape de HTML)
+                                    6. SendEmail ───────────────────▶ SES envía el correo
+   ◀────────────────────────────── 7. Responde éxito o error           al usuario
+ Muestra el resultado en pantalla
+```
+
+Las credenciales de AWS solo existen como variables de entorno en Vercel; nunca llegan al navegador.
+
+> **Nota sobre el sandbox de SES:** mientras la cuenta de AWS esté en modo sandbox, SES solo entrega correos a direcciones verificadas en la consola de SES. Para probar el envío, el correo del usuario debe estar verificado como identidad.
+
+## Instalación y ejecución local
+
+Requisitos: Node.js 20.19+ y una cuenta de Firebase.
+
+```bash
+git clone https://github.com/secasospina/Gestor_De_Tareas.git
+cd Gestor_De_Tareas
+npm install
+cp .env.example .env   # y completa los valores
+npm run dev            # http://localhost:5173
+```
+
+Configuración en Firebase:
+1. Crear un proyecto y registrar una app web.
+2. En **Authentication**, habilitar los proveedores *Correo electrónico/contraseña* y *Google*.
+3. Crear la base de datos **Firestore** y publicar el contenido de `firestore.rules` en la pestaña *Reglas*.
+4. Si se despliega, agregar el dominio de Vercel en **Authentication → Configuración → Dominios autorizados**.
+
+> `npm run dev` levanta solo el frontend. La función `/api/send-summary` se ejecuta en Vercel (o localmente con `vercel dev`).
+
+### Scripts
+
+| Comando | Descripción |
+|---|---|
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` | Chequeo de tipos y build de producción |
+| `npm test` | Ejecuta todos los tests una vez |
+| `npm run test:watch` | Tests en modo observación |
+| `npm run lint` | Linter (oxlint) |
+
+## Variables de entorno
+
+Plantilla en `.env.example`. El archivo `.env` está en `.gitignore` y nunca se sube al repositorio.
+
+| Variable | Dónde se usa | Descripción |
+|---|---|---|
+| `VITE_FIREBASE_API_KEY` | Frontend | Configuración de la app web de Firebase |
+| `VITE_FIREBASE_AUTH_DOMAIN` | Frontend | Dominio de autenticación |
+| `VITE_FIREBASE_PROJECT_ID` | Frontend y función | ID del proyecto (la función lo usa para verificar el token) |
+| `VITE_FIREBASE_STORAGE_BUCKET` | Frontend | Bucket del proyecto |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Frontend | ID de remitente |
+| `VITE_FIREBASE_APP_ID` | Frontend | ID de la app |
+| `SES_REGION` | Función | Región de AWS SES (ej. `us-east-2`) |
+| `SES_ACCESS_KEY_ID` | Función | Access key de un usuario IAM con permisos de SES |
+| `SES_SECRET_ACCESS_KEY` | Función | Clave secreta de ese usuario |
+| `SES_FROM_EMAIL` | Función | Remitente verificado en SES |
+
+- Solo las variables con prefijo `VITE_` llegan al navegador. Las de SES no lo llevan a propósito, para que nunca queden expuestas.
+- Las variables de SES no se llaman `AWS_...` porque Vercel reserva esos nombres.
+- La configuración web de Firebase no es secreta (termina en el código del navegador); lo que protege los datos son las reglas de Firestore. Aun así se maneja con variables de entorno.
+
+## Testing
+
+```bash
+npm test
+```
+
+- **Unitarios:** validación, orden y resumen de tareas; armado del email y escape de HTML; traducción de errores de autenticación.
+- **Componentes:** `TodoForm` (validación, envío, modo edición, error al guardar) y `TodoList` (lista vacía, completar, editar, eliminar con confirmación).
+- **Servicios con mocks:** el servicio de email se prueba con Firebase y `fetch` simulados, sin llamadas reales a internet.
+
+## Deploy
+
+El proyecto está conectado a Vercel desde GitHub: cada push a `main` despliega automáticamente.
+
+1. Importar el repositorio en Vercel (framework detectado: Vite).
+2. Configurar todas las variables de entorno de la tabla anterior.
+3. `vercel.json` redirige cualquier ruta (excepto `/api/*`) a `index.html`, para que React Router funcione al recargar o abrir un enlace directo.
+
+## Uso de IA en el proceso de trabajo
+
+Utilicé Claude como asistente de desarrollo durante todo el proyecto, con el objetivo de aprender mientras construía y no solo de obtener código.
+
+**Cómo lo integré**
+- Le pedí que me guiara paso a paso y a mi ritmo, explicando el porqué de cada decisión antes de avanzar.
+- Para las partes de código, la IA generó los archivos con comentarios; yo los revisé, hice las preguntas que necesitaba para entenderlos y ejecuté las pruebas manuales y automáticas antes de cada commit.
+- La configuración de servicios externos (Firebase, AWS SES, IAM, Vercel) la hice yo en las consolas, usando la IA como guía cuando la interfaz no coincidía con lo esperado.
+
+**Dónde fue más efectiva**
+- **Diagnosticar errores:** por ejemplo, cuando la función de email fallaba en producción con un mensaje genérico, ayudó a identificar que la causa era la falta de la extensión `.js` en un import por el modo ES Modules de Node.
+- **Seguridad:** propuso desde el inicio ignorar `.env` antes del primer commit, separar variables públicas (`VITE_`) de secretas, verificar el token de Firebase en el servidor y escribir reglas de Firestore.
+- **Navegar consolas cambiantes:** cuando las pantallas de Firebase, AWS o Vercel no coincidían con las instrucciones, bastaba compartir una captura para ubicar la opción correcta.
+- **Testing:** sugerir qué probar y cómo simular servicios externos con mocks.
+
+**Patrones y buenas prácticas que descubrí**
+- Dar contexto claro (la consigna, el estado actual, capturas de pantalla) produce respuestas mucho más precisas.
+- Avanzar en pasos pequeños, verificando cada uno (`npm run build`, pruebas manuales, `git status`) y con un commit semántico por cambio, hace fácil detectar y corregir errores.
+- Nunca compartir secretos (claves de AWS) con la IA: se configuran directamente en `.env` y en Vercel.
+- Revisar y entender el código generado antes de aceptarlo; pedir comentarios en el código ayuda tanto a aprender como a que otros lo entiendan.
+- La IA también se equivoca o se desactualiza (por ejemplo, con interfaces de consolas que cambiaron), así que siempre hay que validar con pruebas reales.
+
+## Posibles mejoras
+
+- Filtros por estado (todas, pendientes, completadas).
+- Reordenar tareas con drag & drop (dnd-kit).
+- Fechas de vencimiento y prioridad.
+- Salir del sandbox de SES y usar un dominio propio como remitente.
+
+## Autor
+
+**Sebastián Castaño Ospina** — [GitHub](https://github.com/secasospina)
