@@ -15,8 +15,10 @@
  */
 import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2'
 import { createRemoteJWKSet, jwtVerify } from 'jose'
-import { buildSummaryEmail } from './_lib/buildSummaryEmail'
-import type { SummaryTask } from './_lib/buildSummaryEmail'
+// En las funciones de Vercel (Node.js con "type": "module") los imports locales
+// deben llevar la extensión .js, aunque el archivo fuente sea .ts.
+import { buildSummaryEmail } from './_lib/buildSummaryEmail.js'
+import type { SummaryTask } from './_lib/buildSummaryEmail.js'
 
 /** Límite de tareas por email, para evitar abusos y correos gigantes. */
 const MAX_TASKS = 200
