@@ -7,6 +7,7 @@
 import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useTasks } from '../hooks/useTasks'
+import { useEmailVerification } from '../hooks/useEmailVerification'
 import { logout } from '../services/auth.service'
 import { sendTasksSummary } from '../services/email.service'
 import { getTaskSummary } from '../utils/tasks'
@@ -14,11 +15,14 @@ import { TodoForm } from '../components/TodoForm'
 import { TodoList } from '../components/TodoList'
 import { ProgressBar } from '../components/ProgressBar'
 import { ThemeToggle } from '../components/ThemeToggle'
+import { EmailVerificationNotice } from '../components/EmailVerificationNotice'
 import { LogOutIcon, LogoIcon, MailIcon } from '../components/icons'
 
 export function TasksPage() {
   const { user } = useAuth()
   const { tasks, loading, error, addTask, editTask, toggleTask, removeTask } = useTasks(user?.uid)
+  // Estado del correo en AWS SES (si ya puede recibir resúmenes).
+  const verification = useEmailVerification(user?.uid)
   const [loggingOut, setLoggingOut] = useState(false)
   // Estado del envío del resumen por email: si está enviando y el último resultado.
   const [sendingEmail, setSendingEmail] = useState(false)
@@ -95,6 +99,16 @@ export function TasksPage() {
           </p>
         </section>
 
+        {/* Aviso para confirmar el correo (solo si aún no está verificado en SES). */}
+        <EmailVerificationNotice
+          status={verification.status}
+          email={verification.email}
+          loading={verification.loading}
+          error={verification.error}
+          onResend={verification.resend}
+          onRefresh={verification.refresh}
+        />
+
         {/* Tarjetas de resumen + barra de progreso. */}
         <section className="card stats" aria-label="Resumen de tareas">
           <div className="stat">
@@ -130,12 +144,19 @@ export function TasksPage() {
               type="button"
               className="btn-secondary btn-sm"
               onClick={handleSendSummary}
-              disabled={sendingEmail || loading || tasks.length === 0}
+              // Solo se habilita con el correo verificado y al menos una tarea.
+              disabled={sendingEmail || loading || tasks.length === 0 || !verification.isVerified}
+              title={verification.isVerified ? undefined : 'Confirma tu correo para activar los resúmenes'}
             >
               <MailIcon size={16} />
               {sendingEmail ? 'Enviando...' : 'Enviarme resumen por email'}
             </button>
           </div>
+
+          {/* Explicación de por qué el botón está deshabilitado. */}
+          {!verification.isVerified && !verification.loading && (
+            <p className="email-status hint">Confirma tu correo (ver aviso de arriba) para activar los resúmenes.</p>
+          )}
 
           {/* role="status" anuncia el resultado a los lectores de pantalla. */}
           {emailStatus && (

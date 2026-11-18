@@ -14,7 +14,7 @@ const { fakeUser, fakeAuth } = vi.hoisted(() => {
 
 vi.mock('../../src/services/firebase', () => ({ auth: fakeAuth }))
 
-import { sendTasksSummary } from '../../src/services/email.service'
+import { checkEmailVerification, sendTasksSummary } from '../../src/services/email.service'
 import type { Task } from '../../src/types/task'
 
 const tasks: Task[] = [
@@ -51,5 +51,41 @@ describe('sendTasksSummary', () => {
   it('falla si no hay usuario autenticado', async () => {
     fakeAuth.currentUser = null
     await expect(sendTasksSummary(tasks)).rejects.toThrow('Debes iniciar sesión.')
+  })
+})
+
+describe('checkEmailVerification', () => {
+  beforeEach(() => {
+    fakeAuth.currentUser = fakeUser
+  })
+
+  it('devuelve el estado que responde el servidor', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({ status: 'sent', email: 'a@b.com' }))
+
+    await expect(checkEmailVerification()).resolves.toEqual({ status: 'sent', email: 'a@b.com' })
+  })
+
+  it('envía resend: true cuando se pide reenviar', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(Response.json({ status: 'sent', email: 'a@b.com' }))
+
+    await checkEmailVerification(true)
+
+    const [url, options] = fetchMock.mock.calls[0]
+    expect(url).toBe('/api/email-verification')
+    expect(JSON.parse(options?.body as string)).toEqual({ resend: true })
+  })
+
+  it('rechaza una respuesta con un estado desconocido', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({ status: 'raro', email: 'a@b.com' }))
+
+    await expect(checkEmailVerification()).rejects.toThrow('Respuesta inesperada del servidor.')
+  })
+
+  it('muestra un mensaje claro si falla la red', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'))
+
+    await expect(checkEmailVerification()).rejects.toThrow('Error de conexión. Revisa tu internet.')
   })
 })

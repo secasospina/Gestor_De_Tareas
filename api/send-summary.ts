@@ -13,33 +13,17 @@
  *
  * Las credenciales de AWS solo existen aquí, en el servidor. Nunca llegan al navegador.
  */
-import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2'
-import { createRemoteJWKSet, jwtVerify } from 'jose'
+import { SendEmailCommand } from '@aws-sdk/client-sesv2'
 // En las funciones de Vercel (Node.js con "type": "module") los imports locales
 // deben llevar la extensión .js, aunque el archivo fuente sea .ts.
 import { buildSummaryEmail } from './_lib/buildSummaryEmail.js'
 import type { SummaryTask } from './_lib/buildSummaryEmail.js'
+import { verifyFirebaseToken } from './_lib/firebaseAuth.js'
+import { getBearerToken, json, requireEnv } from './_lib/http.js'
+import { createSesClient } from './_lib/ses.js'
 
 /** Límite de tareas por email, para evitar abusos y correos gigantes. */
 const MAX_TASKS = 200
-
-// Llaves públicas con las que Google firma los tokens de Firebase.
-// jose las descarga y las guarda en caché automáticamente.
-const firebaseKeys = createRemoteJWKSet(
-  new URL('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com'),
-)
-
-/** Respuesta JSON con el código HTTP indicado. */
-function json(status: number, body: Record<string, unknown>): Response {
-  return Response.json(body, { status })
-}
-
-/** Lee una variable de entorno obligatoria; si falta, es un error de configuración. */
-function requireEnv(name: string): string {
-  const value = process.env[name]
-  if (!value) throw new Error(`Falta la variable de entorno ${name}`)
-  return value
-}
 
 /** Comprueba que el body tenga la forma esperada: { tasks: [{ title, completed }] }. */
 function parseTasks(body: unknown): SummaryTask[] | null {
@@ -59,47 +43,25 @@ function parseTasks(body: unknown): SummaryTask[] | null {
 
 export async function POST(request: Request): Promise<Response> {
   // 1. Leer el token "Bearer <token>" del header.
-  const authHeader = request.headers.get('authorization') ?? ''
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
+  const token = getBearerToken(request)
   if (!token) return json(401, { error: 'No autenticado.' })
 
   try {
-    const projectId = requireEnv('VITE_FIREBASE_PROJECT_ID')
-
     // 2. Verificar el token: firma, emisor, audiencia y fecha de expiración.
-    let email: string
-    let userName: string
-    try {
-      const { payload } = await jwtVerify(token, firebaseKeys, {
-        issuer: `https://securetoken.google.com/${projectId}`,
-        audience: projectId,
-      })
-      if (typeof payload.email !== 'string') return json(400, { error: 'Tu cuenta no tiene correo.' })
-      email = payload.email
-      userName = typeof payload.name === 'string' ? payload.name : email
-    } catch {
-      return json(401, { error: 'Sesión inválida o expirada. Vuelve a iniciar sesión.' })
-    }
+    const user = await verifyFirebaseToken(token)
+    if (!user) return json(401, { error: 'Sesión inválida o expirada. Vuelve a iniciar sesión.' })
 
     // 3. Validar los datos recibidos.
     const tasks = parseTasks(await request.json().catch(() => null))
     if (!tasks) return json(400, { error: 'Datos de tareas inválidos.' })
 
     // 4. Enviar el email con SES.
-    const ses = new SESv2Client({
-      region: requireEnv('SES_REGION'),
-      credentials: {
-        accessKeyId: requireEnv('SES_ACCESS_KEY_ID'),
-        secretAccessKey: requireEnv('SES_SECRET_ACCESS_KEY'),
-      },
-    })
+    const { subject, html, text } = buildSummaryEmail(user.name, tasks)
 
-    const { subject, html, text } = buildSummaryEmail(userName, tasks)
-
-    await ses.send(
+    await createSesClient().send(
       new SendEmailCommand({
         FromEmailAddress: requireEnv('SES_FROM_EMAIL'),
-        Destination: { ToAddresses: [email] },
+        Destination: { ToAddresses: [user.email] },
         Content: {
           Simple: {
             Subject: { Data: subject, Charset: 'UTF-8' },
@@ -112,10 +74,18 @@ export async function POST(request: Request): Promise<Response> {
       }),
     )
 
-    return json(200, { message: `Resumen enviado a ${email}.` })
+    return json(200, { message: `Resumen enviado a ${user.email}.` })
   } catch (error) {
-    // El detalle técnico va a los logs de Vercel; al usuario le damos un mensaje genérico.
+    // El detalle técnico va a los logs de Vercel; al usuario le damos un mensaje claro.
     console.error('Error enviando el resumen:', error)
+
+    // Caso conocido: SES está en modo sandbox y el correo aún no está verificado.
+    if (error instanceof Error && error.name === 'MessageRejected') {
+      return json(403, {
+        error: 'Tu correo aún no está verificado. Confirma el correo de verificación de Amazon Web Services e intenta de nuevo.',
+      })
+    }
+
     return json(500, { error: 'No se pudo enviar el email. Intenta más tarde.' })
   }
 }
