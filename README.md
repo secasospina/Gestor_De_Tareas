@@ -4,7 +4,13 @@ Aplicación web SPA para que los empleados de una pequeña empresa gestionen sus
 
 **🔗 Producción:** https://gestor-de-tareas-sooty.vercel.app
 
-Proyecto Integrador del Módulo 4 (Full Stack) — caso MateCode.
+> **📌 Nota para quien califica — resumen por email**
+>
+> La cuenta de AWS SES está en **modo sandbox** (lo habitual en cuentas nuevas): solo puede enviar correos a direcciones verificadas, y salir del sandbox exige un dominio propio. Para que el envío funcione con **cualquier cuenta**, la app verifica automáticamente el correo de cada usuario:
+>
+> 1. Al entrar por primera vez a **Mis tareas**, aparece un aviso y llega al correo un mensaje de **Amazon Web Services** (en inglés, *"Email Address Verification Request"*). Revisar también spam.
+> 2. Abrir el enlace de ese correo para confirmar.
+> 3. Volver a la app y presionar **"Ya confirmé"**: el botón **"Enviarme resumen por email"** queda habilitado y el resumen llega al correo.
 
 ---
 
@@ -16,8 +22,9 @@ Proyecto Integrador del Módulo 4 (Full Stack) — caso MateCode.
 - **Persistencia por usuario:** las tareas se guardan en Cloud Firestore y cada usuario solo ve las suyas.
 - **Actualización en tiempo real:** la lista se actualiza sola después de cada operación.
 - **Resumen por email:** un botón envía al correo del usuario el estado de todas sus tareas mediante AWS SES.
+- **Verificación automática del correo:** la primera vez que el usuario entra, se le envía la verificación de SES y un aviso le indica qué hacer (con opción de reenviar).
 - **Estados de carga y errores** en formularios, lista y envío de email.
-- **Diseño responsive** con enfoque mobile first.
+- **Diseño responsive** con enfoque mobile first, **modo claro/oscuro** (recuerda la elección del usuario), animaciones suaves (respetando "reducir movimiento") y barra de progreso.
 
 ## Stack
 
@@ -35,8 +42,10 @@ Proyecto Integrador del Módulo 4 (Full Stack) — caso MateCode.
 
 ```
 ├─ api/                       # Vercel Functions (servidor)
-│  ├─ send-summary.ts         # POST /api/send-summary → envía el email con SES
-│  └─ _lib/                   # Código auxiliar (el "_" evita que Vercel lo publique como endpoint)
+│  ├─ send-summary.ts         # POST /api/send-summary → envía el resumen con SES
+│  ├─ email-verification.ts   # POST /api/email-verification → estado/solicitud de verificación en SES
+│  └─ _lib/                   # Código compartido: token de Firebase, cliente SES, utilidades HTTP
+│                             # (el "_" evita que Vercel lo publique como endpoint)
 ├─ src/
 │  ├─ pages/                  # Vistas: Login, Register, Tasks
 │  ├─ components/             # UI: TodoForm, TodoList, TodoItem, LoadingScreen
@@ -62,6 +71,8 @@ Proyecto Integrador del Módulo 4 (Full Stack) — caso MateCode.
 - **Seguridad en el servidor.** Las reglas de Firestore (`firestore.rules`) verifican que `userId` coincida con el usuario autenticado para leer, crear, editar o borrar, y validan la forma de cada tarea. El filtro por `userId` en el frontend no es la única protección.
 - **Carpeta `api/` en lugar de `functions/`.** Vercel solo detecta funciones dentro de `api/`, por eso el endpoint de email vive ahí.
 - **El endpoint de email no confía en el navegador.** El frontend envía el *ID token* de Firebase; la función lo verifica con las llaves públicas de Google (librería `jose`) y envía el correo únicamente a la dirección que contiene el token. Así nadie puede usar el endpoint para enviar correos a terceros.
+- **Verificación del correo bajo demanda (sandbox de SES).** En lugar de verificar solo en el formulario de registro, la app consulta el estado al entrar a "Mis tareas". Así funciona igual para registros con correo, para inicios de sesión con Google y para cuentas existentes. Toda la lógica de AWS vive en el servidor (`/api/email-verification`), y cada usuario solo puede verificar su propio correo (sale del token verificado).
+- **Código compartido entre funciones** en `api/_lib/` (verificación del token, cliente SES, respuestas HTTP) para no duplicar lógica.
 - **Imports con extensión `.js` en `api/`.** El proyecto usa `"type": "module"`, y Node.js en modo ES Modules exige la extensión en los imports locales.
 
 ## Flujo de envío de emails
@@ -85,7 +96,20 @@ Proyecto Integrador del Módulo 4 (Full Stack) — caso MateCode.
 
 Las credenciales de AWS solo existen como variables de entorno en Vercel; nunca llegan al navegador.
 
-> **Nota sobre el sandbox de SES:** mientras la cuenta de AWS esté en modo sandbox, SES solo entrega correos a direcciones verificadas en la consola de SES. Para probar el envío, el correo del usuario debe estar verificado como identidad.
+### Verificación del correo (sandbox de SES)
+
+```
+Usuario entra a "Mis tareas"
+   │ POST /api/email-verification  (con el ID token)
+   ▼
+[Vercel Function] verifica el token y consulta el correo en SES
+   ├─ ya verificado        → { status: "verified" } → botón de resumen habilitado
+   ├─ nunca solicitado     → CreateEmailIdentity → AWS envía el correo de verificación → { status: "sent" }
+   ├─ pendiente            → { status: "pending" } → aviso con opción "Reenviar correo"
+   └─ expirado / reenviar  → se borra y se vuelve a crear la identidad → { status: "sent" }
+```
+
+Mientras el correo no esté verificado, el botón de resumen permanece deshabilitado con una explicación, y si SES igualmente rechaza un envío (`MessageRejected`) la función responde con un mensaje claro. En una cuenta fuera del sandbox (con dominio propio verificado) este paso deja de ser necesario.
 
 ## Instalación y ejecución local
 
