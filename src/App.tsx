@@ -6,8 +6,8 @@
  * - Cualquier otra ruta redirige a /tasks (y de ahí a /login si no hay sesión).
  */
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { ProtectedRoute } from './components/ProtectedRoute'
-import { PublicOnlyRoute } from './components/PublicOnlyRoute'
+import { ProtectedRoute } from './routes/ProtectedRoute'
+import { PublicOnlyRoute } from './routes/PublicOnlyRoute'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { TasksPage } from './pages/TasksPage'

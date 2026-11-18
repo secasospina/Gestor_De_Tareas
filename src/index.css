@@ -154,3 +154,156 @@ button:focus-visible {
   min-height: 100vh;
   color: var(--color-muted);
 }
+
+/* ===== Tareas ===== */
+textarea {
+  font: inherit;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  resize: vertical;
+}
+
+textarea:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.card {
+  margin-top: 1rem;
+  padding: 1.25rem;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: 0 2px 12px rgb(0 0 0 / 0.06);
+}
+
+.card h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.15rem;
+}
+
+.banner {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: #fef3f2;
+  border-radius: var(--radius);
+}
+
+.todo-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.list-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.summary,
+.empty-state {
+  color: var(--color-muted);
+}
+
+.todo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Mobile first: en pantallas pequeñas las acciones van debajo del texto. */
+.todo-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.todo-check {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.todo-check input {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-top: 0.15rem;
+}
+
+.todo-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  overflow-wrap: anywhere;
+}
+
+.todo-title {
+  font-weight: 600;
+}
+
+.todo-description {
+  color: var(--color-muted);
+  font-size: 0.95rem;
+  white-space: pre-line;
+}
+
+.is-completed .todo-title {
+  text-decoration: line-through;
+  color: var(--color-muted);
+}
+
+.todo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.todo-actions button {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.btn-danger {
+  background: var(--color-error);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #912018;
+}
+
+.confirm-text {
+  color: var(--color-error);
+  font-size: 0.9rem;
+}
+
+/* En pantallas medianas en adelante, texto y acciones en la misma fila. */
+@media (min-width: 640px) {
+  .todo-item {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .todo-item:has(form) {
+    display: block;
+  }
+}

@@ -1,0 +1,37 @@
+// Reglas de seguridad de Firestore.
+// Se copian en la consola de Firebase → Firestore → Reglas.
+// Garantizan EN EL SERVIDOR que cada usuario solo acceda a sus propias tareas,
+// aunque alguien intente saltarse el frontend.
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Valida la forma de una tarea (los límites coinciden con src/utils/tasks.ts).
+    function isValidTask(data) {
+      return data.title is string
+        && data.title.size() > 0
+        && data.title.size() <= 100
+        && data.description is string
+        && data.description.size() <= 500
+        && data.completed is bool;
+    }
+
+    match /tasks/{taskId} {
+      // Leer o borrar: solo si la tarea es del usuario autenticado.
+      allow read, delete: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+
+      // Crear: el userId de la tarea nueva debe ser el del propio usuario.
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && isValidTask(request.resource.data);
+
+      // Editar: debe ser el dueño y no puede cambiar el userId a otra persona.
+      allow update: if request.auth != null
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId
+        && isValidTask(request.resource.data);
+    }
+  }
+}
