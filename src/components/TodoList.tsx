@@ -5,6 +5,7 @@
  * (no sabe de dónde vienen los datos). Así es fácil de reutilizar y de testear.
  */
 import { TodoItem } from './TodoItem'
+import { LogoIcon } from './icons'
 import type { Task, TaskInput } from '../types/task'
 
 interface TodoListProps {
@@ -16,7 +17,12 @@ interface TodoListProps {
 
 export function TodoList({ tasks, onToggle, onEdit, onDelete }: TodoListProps) {
   if (tasks.length === 0) {
-    return <p className="empty-state">No tienes tareas todavía. ¡Crea la primera!</p>
+    return (
+      <div className="empty-state">
+        <LogoIcon size={40} />
+        <p>No tienes tareas todavía. ¡Crea la primera!</p>
+      </div>
+    )
   }
 
   return (

@@ -8,6 +8,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { getAuthErrorMessage, registerWithEmail } from '../services/auth.service'
+import { AuthLayout } from '../components/AuthLayout'
 
 /** Mínimo de caracteres que exige Firebase para una contraseña. */
 const MIN_PASSWORD_LENGTH = 6
@@ -51,66 +52,62 @@ export function RegisterPage() {
   }
 
   return (
-    <main className="auth-page">
-      <section className="auth-card">
-        <h1>Crear cuenta</h1>
+    <AuthLayout title="Crear cuenta" subtitle="Regístrate gratis y empieza a organizarte.">
+      <form onSubmit={handleSubmit} noValidate>
+        <label htmlFor="name">Nombre</label>
+        <input
+          id="name"
+          type="text"
+          autoComplete="name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
 
-        <form onSubmit={handleSubmit} noValidate>
-          <label htmlFor="name">Nombre</label>
-          <input
-            id="name"
-            type="text"
-            autoComplete="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
+        <label htmlFor="email">Correo electrónico</label>
+        <input
+          id="email"
+          type="email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
 
-          <label htmlFor="email">Correo electrónico</label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+        <label htmlFor="password">Contraseña</label>
+        <input
+          id="password"
+          type="password"
+          autoComplete="new-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
 
-          <label htmlFor="password">Contraseña</label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+        <label htmlFor="confirmPassword">Confirmar contraseña</label>
+        <input
+          id="confirmPassword"
+          type="password"
+          autoComplete="new-password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+        />
 
-          <label htmlFor="confirmPassword">Confirmar contraseña</label>
-          <input
-            id="confirmPassword"
-            type="password"
-            autoComplete="new-password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-          />
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
 
-          {error && (
-            <p className="form-error" role="alert">
-              {error}
-            </p>
-          )}
+        <button type="submit" disabled={submitting}>
+          {submitting ? 'Creando cuenta...' : 'Registrarme'}
+        </button>
+      </form>
 
-          <button type="submit" disabled={submitting}>
-            {submitting ? 'Creando cuenta...' : 'Registrarme'}
-          </button>
-        </form>
-
-        <p className="auth-switch">
-          ¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link>
-        </p>
-      </section>
-    </main>
+      <p className="auth-switch">
+        ¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link>
+      </p>
+    </AuthLayout>
   )
 }

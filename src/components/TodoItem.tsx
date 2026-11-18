@@ -6,6 +6,7 @@
  */
 import { useState } from 'react'
 import { TodoForm } from './TodoForm'
+import { PencilIcon, TrashIcon } from './icons'
 import type { Task, TaskInput } from '../types/task'
 
 interface TodoItemProps {
@@ -78,10 +79,12 @@ export function TodoItem({ task, onToggle, onEdit, onDelete }: TodoItemProps) {
           </>
         ) : (
           <>
-            <button type="button" className="btn-secondary" disabled={busy} onClick={() => setIsEditing(true)}>
+            <button type="button" className="btn-ghost" disabled={busy} onClick={() => setIsEditing(true)}>
+              <PencilIcon size={16} />
               Editar
             </button>
-            <button type="button" className="btn-secondary" disabled={busy} onClick={() => setConfirmingDelete(true)}>
+            <button type="button" className="btn-ghost danger" disabled={busy} onClick={() => setConfirmingDelete(true)}>
+              <TrashIcon size={16} />
               Eliminar
             </button>
           </>

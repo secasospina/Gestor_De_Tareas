@@ -8,6 +8,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { getAuthErrorMessage, loginWithEmail, loginWithGoogle } from '../services/auth.service'
+import { AuthLayout } from '../components/AuthLayout'
 
 export function LoginPage() {
   const [email, setEmail] = useState('')
@@ -39,58 +40,54 @@ export function LoginPage() {
   }
 
   return (
-    <main className="auth-page">
-      <section className="auth-card">
-        <h1>Iniciar sesión</h1>
+    <AuthLayout title="Iniciar sesión" subtitle="Ingresa para ver y organizar tus tareas.">
+      <form onSubmit={handleSubmit} noValidate>
+        <label htmlFor="email">Correo electrónico</label>
+        <input
+          id="email"
+          type="email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
 
-        <form onSubmit={handleSubmit} noValidate>
-          <label htmlFor="email">Correo electrónico</label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+        <label htmlFor="password">Contraseña</label>
+        <input
+          id="password"
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
 
-          <label htmlFor="password">Contraseña</label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+        {/* role="alert" hace que los lectores de pantalla anuncien el error. */}
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
 
-          {/* role="alert" hace que los lectores de pantalla anuncien el error. */}
-          {error && (
-            <p className="form-error" role="alert">
-              {error}
-            </p>
-          )}
-
-          <button type="submit" disabled={submitting || !email || !password}>
-            {submitting ? 'Ingresando...' : 'Ingresar'}
-          </button>
-        </form>
-
-        <div className="divider">o</div>
-
-        <button
-          type="button"
-          className="btn-secondary"
-          onClick={() => void runLogin(loginWithGoogle)}
-          disabled={submitting}
-        >
-          Continuar con Google
+        <button type="submit" disabled={submitting || !email || !password}>
+          {submitting ? 'Ingresando...' : 'Ingresar'}
         </button>
+      </form>
 
-        <p className="auth-switch">
-          ¿No tienes cuenta? <Link to="/register">Regístrate</Link>
-        </p>
-      </section>
-    </main>
+      <div className="divider">o</div>
+
+      <button
+        type="button"
+        className="btn-secondary"
+        onClick={() => void runLogin(loginWithGoogle)}
+        disabled={submitting}
+      >
+        Continuar con Google
+      </button>
+
+      <p className="auth-switch">
+        ¿No tienes cuenta? <Link to="/register">Regístrate</Link>
+      </p>
+    </AuthLayout>
   )
 }

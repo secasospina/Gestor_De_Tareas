@@ -9,6 +9,7 @@ import { useId, useState } from 'react'
 import type { FormEvent } from 'react'
 import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH, validateTaskInput } from '../utils/tasks'
 import type { TaskInput, TaskInputErrors } from '../types/task'
+import { PlusIcon } from './icons'
 
 interface TodoFormProps {
   /** Acción que guarda la tarea; debe lanzar un error si falla. */
@@ -91,6 +92,8 @@ export function TodoForm({
           </button>
         )}
         <button type="submit" disabled={submitting}>
+          {/* En modo creación (sin onCancel) mostramos el ícono "+". */}
+          {!onCancel && <PlusIcon size={16} />}
           {submitting ? 'Guardando...' : submitLabel}
         </button>
       </div>

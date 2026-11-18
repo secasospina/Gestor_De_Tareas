@@ -2,7 +2,7 @@
  * Página principal de tareas (ruta protegida).
  *
  * Une todas las piezas: obtiene el usuario (useAuth), sus tareas (useTasks)
- * y se las pasa a los componentes de formulario y lista.
+ * y se las pasa a los componentes de formulario, progreso y lista.
  */
 import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
@@ -12,6 +12,9 @@ import { sendTasksSummary } from '../services/email.service'
 import { getTaskSummary } from '../utils/tasks'
 import { TodoForm } from '../components/TodoForm'
 import { TodoList } from '../components/TodoList'
+import { ProgressBar } from '../components/ProgressBar'
+import { ThemeToggle } from '../components/ThemeToggle'
+import { LogOutIcon, LogoIcon, MailIcon } from '../components/icons'
 
 export function TasksPage() {
   const { user } = useAuth()
@@ -22,6 +25,11 @@ export function TasksPage() {
   const [emailStatus, setEmailStatus] = useState<{ ok: boolean; text: string } | null>(null)
 
   const summary = getTaskSummary(tasks)
+  // Nombre visible: el del perfil si existe; si no, el correo.
+  const displayName = user?.displayName ?? user?.email ?? ''
+  // Primer nombre para el saludo y la inicial para el avatar.
+  const firstName = displayName.split(' ')[0]
+  const initial = displayName.charAt(0).toUpperCase()
 
   async function handleLogout() {
     setLoggingOut(true)
@@ -48,62 +56,103 @@ export function TasksPage() {
   }
 
   return (
-    <main className="tasks-page">
+    <div className="app-shell">
       <header className="app-header">
-        <h1>Mis tareas</h1>
+        <div className="brand">
+          <span className="brand-mark small">
+            <LogoIcon size={20} />
+          </span>
+          <span className="brand-name">Gestor de Tareas</span>
+        </div>
+
         <div className="user-box">
-          {/* Mostramos el nombre si existe; si no (login sin nombre), el correo. */}
-          <span>{user?.displayName ?? user?.email}</span>
-          <button type="button" className="btn-secondary" onClick={handleLogout} disabled={loggingOut}>
-            {loggingOut ? 'Saliendo...' : 'Cerrar sesión'}
+          <ThemeToggle />
+          {/* Avatar con la inicial; el nombre completo se ve en pantallas medianas en adelante. */}
+          <span className="avatar" aria-hidden="true">
+            {initial}
+          </span>
+          <span className="user-name">{displayName}</span>
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={handleLogout}
+            disabled={loggingOut}
+            aria-label="Cerrar sesión"
+            title="Cerrar sesión"
+          >
+            <LogOutIcon />
           </button>
         </div>
       </header>
 
-      <section className="card" aria-labelledby="new-task-title">
-        <h2 id="new-task-title">Nueva tarea</h2>
-        <TodoForm onSubmit={addTask} />
-      </section>
+      <main className="tasks-page">
+        <section className="welcome">
+          <h1>Hola, {firstName} 👋</h1>
+          <p>
+            {summary.total === 0
+              ? 'Empieza creando tu primera tarea.'
+              : `Tienes ${summary.pending} ${summary.pending === 1 ? 'tarea pendiente' : 'tareas pendientes'}.`}
+          </p>
+        </section>
 
-      {error && (
-        <p className="form-error banner" role="alert">
-          {error}
-        </p>
-      )}
+        {/* Tarjetas de resumen + barra de progreso. */}
+        <section className="card stats" aria-label="Resumen de tareas">
+          <div className="stat">
+            <span className="stat-value">{summary.total}</span>
+            <span className="stat-label">Total</span>
+          </div>
+          <div className="stat">
+            <span className="stat-value pending">{summary.pending}</span>
+            <span className="stat-label">Pendientes</span>
+          </div>
+          <div className="stat">
+            <span className="stat-value done">{summary.completed}</span>
+            <span className="stat-label">Completadas</span>
+          </div>
+          <ProgressBar completed={summary.completed} total={summary.total} />
+        </section>
 
-      <section className="card" aria-labelledby="list-title">
-        <div className="list-header">
-          <h2 id="list-title">Lista</h2>
-          {!loading && (
-            <span className="summary">
-              {summary.pending} pendientes · {summary.completed} completadas
-            </span>
-          )}
-        </div>
+        <section className="card" aria-labelledby="new-task-title">
+          <h2 id="new-task-title">Nueva tarea</h2>
+          <TodoForm onSubmit={addTask} />
+        </section>
 
-        <div className="email-box">
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={handleSendSummary}
-            disabled={sendingEmail || loading || tasks.length === 0}
-          >
-            {sendingEmail ? 'Enviando...' : 'Enviarme resumen por email'}
-          </button>
+        {error && (
+          <p className="form-error banner" role="alert">
+            {error}
+          </p>
+        )}
+
+        <section className="card" aria-labelledby="list-title">
+          <div className="list-header">
+            <h2 id="list-title">Mis tareas</h2>
+            <button
+              type="button"
+              className="btn-secondary btn-sm"
+              onClick={handleSendSummary}
+              disabled={sendingEmail || loading || tasks.length === 0}
+            >
+              <MailIcon size={16} />
+              {sendingEmail ? 'Enviando...' : 'Enviarme resumen por email'}
+            </button>
+          </div>
+
           {/* role="status" anuncia el resultado a los lectores de pantalla. */}
           {emailStatus && (
-            <span role="status" className={emailStatus.ok ? 'email-ok' : 'form-error'}>
+            <p role="status" className={`email-status ${emailStatus.ok ? 'email-ok' : 'form-error'}`}>
               {emailStatus.text}
-            </span>
+            </p>
           )}
-        </div>
 
-        {loading ? (
-          <p role="status">Cargando tareas...</p>
-        ) : (
-          <TodoList tasks={tasks} onToggle={toggleTask} onEdit={editTask} onDelete={removeTask} />
-        )}
-      </section>
-    </main>
+          {loading ? (
+            <p role="status" className="empty-state">
+              Cargando tareas...
+            </p>
+          ) : (
+            <TodoList tasks={tasks} onToggle={toggleTask} onEdit={editTask} onDelete={removeTask} />
+          )}
+        </section>
+      </main>
+    </div>
   )
 }
