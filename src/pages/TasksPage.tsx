@@ -8,6 +8,7 @@ import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useTasks } from '../hooks/useTasks'
 import { logout } from '../services/auth.service'
+import { sendTasksSummary } from '../services/email.service'
 import { getTaskSummary } from '../utils/tasks'
 import { TodoForm } from '../components/TodoForm'
 import { TodoList } from '../components/TodoList'
@@ -16,6 +17,9 @@ export function TasksPage() {
   const { user } = useAuth()
   const { tasks, loading, error, addTask, editTask, toggleTask, removeTask } = useTasks(user?.uid)
   const [loggingOut, setLoggingOut] = useState(false)
+  // Estado del envío del resumen por email: si está enviando y el último resultado.
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const [emailStatus, setEmailStatus] = useState<{ ok: boolean; text: string } | null>(null)
 
   const summary = getTaskSummary(tasks)
 
@@ -26,6 +30,20 @@ export function TasksPage() {
       await logout()
     } catch {
       setLoggingOut(false)
+    }
+  }
+
+  /** Envía el resumen de tareas al correo del usuario (vía /api/send-summary). */
+  async function handleSendSummary() {
+    setSendingEmail(true)
+    setEmailStatus(null)
+    try {
+      const message = await sendTasksSummary(tasks)
+      setEmailStatus({ ok: true, text: message })
+    } catch (err) {
+      setEmailStatus({ ok: false, text: err instanceof Error ? err.message : 'No se pudo enviar el email.' })
+    } finally {
+      setSendingEmail(false)
     }
   }
 
@@ -59,6 +77,23 @@ export function TasksPage() {
           {!loading && (
             <span className="summary">
               {summary.pending} pendientes · {summary.completed} completadas
+            </span>
+          )}
+        </div>
+
+        <div className="email-box">
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={handleSendSummary}
+            disabled={sendingEmail || loading || tasks.length === 0}
+          >
+            {sendingEmail ? 'Enviando...' : 'Enviarme resumen por email'}
+          </button>
+          {/* role="status" anuncia el resultado a los lectores de pantalla. */}
+          {emailStatus && (
+            <span role="status" className={emailStatus.ok ? 'email-ok' : 'form-error'}>
+              {emailStatus.text}
             </span>
           )}
         </div>

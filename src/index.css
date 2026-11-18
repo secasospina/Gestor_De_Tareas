@@ -307,3 +307,17 @@ textarea:focus-visible {
     display: block;
   }
 }
+
+/* ===== Envío de resumen por email ===== */
+.email-box {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.email-ok {
+  color: #1a7f37;
+  font-size: 0.9rem;
+}
