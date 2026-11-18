@@ -129,3 +129,11 @@ export function ShieldIcon(props: IconProps) {
     </BaseIcon>
   )
 }
+
+export function ArrowLeftIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M19 12H5M11 18l-6-6 6-6" />
+    </BaseIcon>
+  )
+}

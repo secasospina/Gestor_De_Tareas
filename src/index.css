@@ -796,3 +796,29 @@ textarea[aria-invalid='true'] {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Enlace "← Volver" en la parte superior de la tarjeta de registro. */
+.back-link {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.back-link:hover {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+/* La flecha se mueve un poco a la izquierda al pasar el mouse. */
+.back-link svg {
+  transition: transform 0.15s ease;
+}
+
+.back-link:hover svg {
+  transform: translateX(-3px);
+}

@@ -52,7 +52,11 @@ export function RegisterPage() {
   }
 
   return (
-    <AuthLayout title="Crear cuenta" subtitle="Regístrate gratis y empieza a organizarte.">
+    <AuthLayout
+      title="Crear cuenta"
+      subtitle="Regístrate gratis y empieza a organizarte."
+      backLink={{ to: '/login', label: 'Volver al inicio de sesión' }}
+    >
       <form onSubmit={handleSubmit} noValidate>
         <label htmlFor="name">Nombre</label>
         <input

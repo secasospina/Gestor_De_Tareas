@@ -6,7 +6,8 @@
  * Así Login y Register no repiten la misma estructura.
  */
 import type { ReactNode } from 'react'
-import { CheckCircleIcon, CloudIcon, LogoIcon, ShieldIcon } from './icons'
+import { Link } from 'react-router-dom'
+import { ArrowLeftIcon, CheckCircleIcon, CloudIcon, LogoIcon, ShieldIcon } from './icons'
 import { ThemeToggle } from './ThemeToggle'
 
 interface AuthLayoutProps {
@@ -14,10 +15,12 @@ interface AuthLayoutProps {
   title: string
   /** Texto corto debajo del título. */
   subtitle: string
+  /** Enlace opcional para volver a otra página (ej. del registro al login). */
+  backLink?: { to: string; label: string }
   children: ReactNode
 }
 
-export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
+export function AuthLayout({ title, subtitle, backLink, children }: AuthLayoutProps) {
   return (
     <main className="auth-page">
       <div className="auth-theme-toggle">
@@ -46,6 +49,12 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
       </section>
 
       <section className="auth-card">
+        {backLink && (
+          <Link to={backLink.to} className="back-link">
+            <ArrowLeftIcon size={16} />
+            {backLink.label}
+          </Link>
+        )}
         <h2>{title}</h2>
         <p className="auth-subtitle">{subtitle}</p>
         {children}
