@@ -158,25 +158,7 @@ El proyecto está conectado a Vercel desde GitHub: cada push a `main` despliega 
 
 ## Uso de IA en el proceso de trabajo
 
-Utilicé Claude como asistente de desarrollo durante todo el proyecto, con el objetivo de aprender mientras construía y no solo de obtener código.
-
-**Cómo lo integré**
-- Le pedí que me guiara paso a paso y a mi ritmo, explicando el porqué de cada decisión antes de avanzar.
-- Para las partes de código, la IA generó los archivos con comentarios; yo los revisé, hice las preguntas que necesitaba para entenderlos y ejecuté las pruebas manuales y automáticas antes de cada commit.
-- La configuración de servicios externos (Firebase, AWS SES, IAM, Vercel) la hice yo en las consolas, usando la IA como guía cuando la interfaz no coincidía con lo esperado.
-
-**Dónde fue más efectiva**
-- **Diagnosticar errores:** por ejemplo, cuando la función de email fallaba en producción con un mensaje genérico, ayudó a identificar que la causa era la falta de la extensión `.js` en un import por el modo ES Modules de Node.
-- **Seguridad:** propuso desde el inicio ignorar `.env` antes del primer commit, separar variables públicas (`VITE_`) de secretas, verificar el token de Firebase en el servidor y escribir reglas de Firestore.
-- **Navegar consolas cambiantes:** cuando las pantallas de Firebase, AWS o Vercel no coincidían con las instrucciones, bastaba compartir una captura para ubicar la opción correcta.
-- **Testing:** sugerir qué probar y cómo simular servicios externos con mocks.
-
-**Patrones y buenas prácticas que descubrí**
-- Dar contexto claro (la consigna, el estado actual, capturas de pantalla) produce respuestas mucho más precisas.
-- Avanzar en pasos pequeños, verificando cada uno (`npm run build`, pruebas manuales, `git status`) y con un commit semántico por cambio, hace fácil detectar y corregir errores.
-- Nunca compartir secretos (claves de AWS) con la IA: se configuran directamente en `.env` y en Vercel.
-- Revisar y entender el código generado antes de aceptarlo; pedir comentarios en el código ayuda tanto a aprender como a que otros lo entiendan.
-- La IA también se equivoca o se desactualiza (por ejemplo, con interfaces de consolas que cambiaron), así que siempre hay que validar con pruebas reales.
+<!-- Pendiente: sección por completar. -->
 
 ## Posibles mejoras
 
