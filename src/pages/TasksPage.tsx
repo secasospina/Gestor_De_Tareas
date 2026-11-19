@@ -15,6 +15,7 @@ import { TodoForm } from '../components/TodoForm'
 import { TodoList } from '../components/TodoList'
 import { ProgressBar } from '../components/ProgressBar'
 import { ThemeToggle } from '../components/ThemeToggle'
+import { Footer } from '../components/Footer'
 import { EmailVerificationNotice } from '../components/EmailVerificationNotice'
 import { LogOutIcon, LogoIcon, MailIcon } from '../components/icons'
 
@@ -174,6 +175,8 @@ export function TasksPage() {
           )}
         </section>
       </main>
+
+      <Footer />
     </div>
   )
 }

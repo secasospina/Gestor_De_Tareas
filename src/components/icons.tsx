@@ -137,3 +137,25 @@ export function ArrowLeftIcon(props: IconProps) {
     </BaseIcon>
   )
 }
+
+/** Ícono genérico de código (rama de Git) para el enlace a GitHub. */
+export function CodeBranchIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <circle cx="6" cy="6" r="2.5" />
+      <circle cx="6" cy="18" r="2.5" />
+      <circle cx="18" cy="8" r="2.5" />
+      <path d="M6 8.5v7M18 10.5c0 4-6 3-11 5.5" />
+    </BaseIcon>
+  )
+}
+
+/** Ícono genérico de maletín (perfil profesional) para el enlace a LinkedIn. */
+export function BriefcaseIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <rect x="3" y="7" width="18" height="13" rx="2" />
+      <path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3 13h18" />
+    </BaseIcon>
+  )
+}

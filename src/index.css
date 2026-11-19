@@ -869,3 +869,76 @@ textarea[aria-invalid='true'] {
 .hint {
   color: var(--muted);
 }
+
+/* ===== Footer ===== */
+
+/* Contenedor de página: el contenido crece y empuja el footer hacia abajo. */
+.page,
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.page > main,
+.app-shell > main {
+  flex: 1;
+}
+
+.page > .auth-page {
+  min-height: 0;
+}
+
+.tasks-page {
+  width: 100%;
+}
+
+.app-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 1.25rem 1rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.app-footer p {
+  margin: 0;
+}
+
+.app-footer strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.footer-links {
+  display: flex;
+  gap: 1rem;
+}
+
+.footer-links a {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+  color: var(--muted);
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.footer-links a:hover {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+/* En pantallas medianas: créditos a la izquierda y enlaces a la derecha. */
+@media (min-width: 640px) {
+  .app-footer {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    text-align: left;
+  }
+}
