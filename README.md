@@ -20,6 +20,7 @@ Aplicación web SPA para que los empleados de una pequeña empresa gestionen sus
 - **Rutas protegidas:** sin sesión no se puede acceder a `/tasks`; con sesión no se muestran login ni registro.
 - **CRUD de tareas:** crear (título + descripción), listar, editar, eliminar (con confirmación) y marcar como completada.
 - **Persistencia por usuario:** las tareas se guardan en Cloud Firestore y cada usuario solo ve las suyas.
+- **Filtros (extra):** ver todas las tareas, solo las pendientes o solo las completadas, con el conteo de cada grupo.
 - **Actualización en tiempo real:** la lista se actualiza sola después de cada operación.
 - **Resumen por email:** un botón envía al correo del usuario el estado de todas sus tareas mediante AWS SES.
 - **Verificación automática del correo:** la primera vez que el usuario entra, se le envía la verificación de SES y un aviso le indica qué hacer (con opción de reenviar).
@@ -187,7 +188,6 @@ El proyecto se desarrolló con apoyo de **Claude** como herramienta de aprendiza
 
 ## Posibles mejoras
 
-- Filtros por estado (todas, pendientes, completadas).
 - Reordenar tareas con drag & drop (dnd-kit).
 - Fechas de vencimiento y prioridad.
 - Salir del sandbox de SES y usar un dominio propio como remitente; en ese momento, exigir `email_verified` en el token (verificación de Firebase) y agregar un límite de envíos por usuario.

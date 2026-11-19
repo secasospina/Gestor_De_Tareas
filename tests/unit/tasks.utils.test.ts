@@ -4,6 +4,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   DESCRIPTION_MAX_LENGTH,
+  filterTasks,
   TITLE_MAX_LENGTH,
   getTaskSummary,
   normalizeTaskInput,
@@ -90,5 +91,23 @@ describe('getTaskSummary', () => {
 
   it('funciona con una lista vacía', () => {
     expect(getTaskSummary([])).toEqual({ total: 0, completed: 0, pending: 0 })
+  })
+})
+
+describe('filterTasks', () => {
+  const pendiente = makeTask({ id: 'p', completed: false })
+  const completada = makeTask({ id: 'c', completed: true })
+  const tasks = [pendiente, completada]
+
+  it('devuelve todas con el filtro "all"', () => {
+    expect(filterTasks(tasks, 'all')).toEqual(tasks)
+  })
+
+  it('devuelve solo las pendientes', () => {
+    expect(filterTasks(tasks, 'pending').map((t) => t.id)).toEqual(['p'])
+  })
+
+  it('devuelve solo las completadas', () => {
+    expect(filterTasks(tasks, 'completed').map((t) => t.id)).toEqual(['c'])
   })
 })

@@ -10,9 +10,11 @@ import { useTasks } from '../hooks/useTasks'
 import { useEmailVerification } from '../hooks/useEmailVerification'
 import { logout } from '../services/auth.service'
 import { sendTasksSummary } from '../services/email.service'
-import { getTaskSummary } from '../utils/tasks'
+import { filterTasks, getTaskSummary } from '../utils/tasks'
+import type { TaskFilter } from '../types/task'
 import { TodoForm } from '../components/TodoForm'
 import { TodoList } from '../components/TodoList'
+import { TaskFilters } from '../components/TaskFilters'
 import { ProgressBar } from '../components/ProgressBar'
 import { ThemeToggle } from '../components/ThemeToggle'
 import { Footer } from '../components/Footer'
@@ -30,6 +32,14 @@ export function TasksPage() {
   const [emailStatus, setEmailStatus] = useState<{ ok: boolean; text: string } | null>(null)
 
   const summary = getTaskSummary(tasks)
+  // Filtro activo de la lista (solo afecta lo que se muestra, no los datos).
+  const [filter, setFilter] = useState<TaskFilter>('all')
+  const visibleTasks = filterTasks(tasks, filter)
+  const emptyMessages: Record<TaskFilter, string> = {
+    all: 'No tienes tareas todavía. ¡Crea la primera!',
+    pending: 'No tienes tareas pendientes. ¡Buen trabajo!',
+    completed: 'Aún no has completado ninguna tarea.',
+  }
   // Nombre visible: el del perfil si existe; si no, el correo.
   const displayName = user?.displayName ?? user?.email ?? ''
   // Primer nombre para el saludo y la inicial para el avatar.
@@ -171,7 +181,16 @@ export function TasksPage() {
               Cargando tareas...
             </p>
           ) : (
-            <TodoList tasks={tasks} onToggle={toggleTask} onEdit={editTask} onDelete={removeTask} />
+            <>
+              {tasks.length > 0 && <TaskFilters value={filter} onChange={setFilter} summary={summary} />}
+              <TodoList
+                tasks={visibleTasks}
+                onToggle={toggleTask}
+                onEdit={editTask}
+                onDelete={removeTask}
+                emptyMessage={emptyMessages[filter]}
+              />
+            </>
           )}
         </section>
       </main>

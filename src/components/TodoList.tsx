@@ -13,14 +13,22 @@ interface TodoListProps {
   onToggle: (task: Task) => Promise<void>
   onEdit: (taskId: string, input: TaskInput) => Promise<void>
   onDelete: (taskId: string) => Promise<void>
+  /** Mensaje cuando no hay tareas que mostrar (cambia según el filtro). */
+  emptyMessage?: string
 }
 
-export function TodoList({ tasks, onToggle, onEdit, onDelete }: TodoListProps) {
+export function TodoList({
+  tasks,
+  onToggle,
+  onEdit,
+  onDelete,
+  emptyMessage = 'No tienes tareas todavía. ¡Crea la primera!',
+}: TodoListProps) {
   if (tasks.length === 0) {
     return (
       <div className="empty-state">
         <LogoIcon size={40} />
-        <p>No tienes tareas todavía. ¡Crea la primera!</p>
+        <p>{emptyMessage}</p>
       </div>
     )
   }

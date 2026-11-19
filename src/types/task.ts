@@ -24,3 +24,6 @@ export interface TaskInput {
 
 /** Errores de validación por campo del formulario. */
 export type TaskInputErrors = Partial<Record<keyof TaskInput, string>>
+
+/** Filtro de la lista de tareas. */
+export type TaskFilter = 'all' | 'pending' | 'completed'

@@ -4,7 +4,7 @@
  * "Puras" significa que no dependen de Firebase ni de React: reciben datos
  * y devuelven datos. Por eso son fáciles de probar con tests unitarios.
  */
-import type { Task, TaskInput, TaskInputErrors } from '../types/task'
+import type { Task, TaskFilter, TaskInput, TaskInputErrors } from '../types/task'
 
 /** Límites de longitud; deben coincidir con las reglas de Firestore (firestore.rules). */
 export const TITLE_MAX_LENGTH = 100
@@ -59,4 +59,11 @@ export interface TaskSummary {
 export function getTaskSummary(tasks: Task[]): TaskSummary {
   const completed = tasks.filter((task) => task.completed).length
   return { total: tasks.length, completed, pending: tasks.length - completed }
+}
+
+/** Devuelve solo las tareas que corresponden al filtro elegido. */
+export function filterTasks(tasks: Task[], filter: TaskFilter): Task[] {
+  if (filter === 'pending') return tasks.filter((task) => !task.completed)
+  if (filter === 'completed') return tasks.filter((task) => task.completed)
+  return tasks
 }

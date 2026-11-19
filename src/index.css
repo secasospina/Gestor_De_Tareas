@@ -942,3 +942,46 @@ textarea[aria-invalid='true'] {
     text-align: left;
   }
 }
+
+/* ===== Filtros de la lista ===== */
+.filters {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.filter-btn {
+  flex: 1;
+  gap: 0.4rem;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: transparent;
+  color: var(--muted);
+}
+
+.filter-btn:hover:not(:disabled) {
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* Filtro activo: resaltado como una "pestaña" seleccionada. */
+.filter-btn.is-active,
+.filter-btn.is-active:hover:not(:disabled) {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
+}
+
+.filter-count {
+  min-width: 1.4rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
