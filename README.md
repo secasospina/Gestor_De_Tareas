@@ -4,11 +4,11 @@ Aplicación web SPA para que los empleados de una pequeña empresa gestionen sus
 
 **🔗 Producción:** https://gestor-de-tareas-sooty.vercel.app
 
-> **📌 Nota para quien califica — resumen por email**
+> **Nota — resumen por email**
 >
 > La cuenta de AWS SES está en **modo sandbox** (lo habitual en cuentas nuevas): solo puede enviar correos a direcciones verificadas, y salir del sandbox exige un dominio propio. Para que el envío funcione con **cualquier cuenta**, la app verifica automáticamente el correo de cada usuario:
 >
-> 1. Al entrar por primera vez a **Mis tareas**, aparece un aviso y llega al correo un mensaje de **Amazon Web Services** (en inglés, *"Email Address Verification Request"*). Revisar también spam.
+> 1. Al entrar por primera vez a **Mis tareas**, aparece un aviso y llega al correo un mensaje de **Amazon Web Services** (en inglés, _"Email Address Verification Request"_). Revisar también spam.
 > 2. Abrir el enlace de ese correo para confirmar.
 > 3. Volver a la app y presionar **"Ya confirmé"**: el botón **"Enviarme resumen por email"** queda habilitado y el resumen llega al correo.
 
@@ -28,15 +28,15 @@ Aplicación web SPA para que los empleados de una pequeña empresa gestionen sus
 
 ## Stack
 
-| Capa | Tecnología |
-|---|---|
-| Frontend | React 19 + TypeScript + Vite |
-| Enrutamiento | React Router |
-| Autenticación | Firebase Authentication |
-| Base de datos | Cloud Firestore |
-| Email | AWS SES (SDK v2) desde una Vercel Function |
-| Deploy | Vercel |
-| Testing | Vitest + React Testing Library |
+| Capa          | Tecnología                                 |
+| ------------- | ------------------------------------------ |
+| Frontend      | React 19 + TypeScript + Vite               |
+| Enrutamiento  | React Router                               |
+| Autenticación | Firebase Authentication                    |
+| Base de datos | Cloud Firestore                            |
+| Email         | AWS SES (SDK v2) desde una Vercel Function |
+| Deploy        | Vercel                                     |
+| Testing       | Vitest + React Testing Library             |
 
 ## Estructura del proyecto
 
@@ -64,13 +64,13 @@ Aplicación web SPA para que los empleados de una pequeña empresa gestionen sus
 
 ## Decisiones arquitectónicas
 
-- **Separación por capas.** Los componentes no hablan directamente con Firebase: usan *hooks* (`useAuth`, `useTasks`), que a su vez usan *services*. Si mañana cambia el proveedor (por ejemplo, otra base de datos), solo se modifica la capa de servicios.
+- **Separación por capas.** Los componentes no hablan directamente con Firebase: usan _hooks_ (`useAuth`, `useTasks`), que a su vez usan _services_. Si mañana cambia el proveedor (por ejemplo, otra base de datos), solo se modifica la capa de servicios.
 - **Funciones puras en `utils/`.** La validación, el orden y el resumen de tareas no dependen de React ni de Firebase, así que son fáciles de probar y de reutilizar.
 - **Sesión con Context API.** `AuthProvider` escucha `onAuthStateChanged` y comparte el usuario con toda la app. Las rutas reaccionan solas a los cambios de sesión, por lo que las páginas no necesitan redirigir manualmente.
 - **Tiempo real con `onSnapshot`.** En lugar de volver a pedir los datos después de cada operación, la app se suscribe a la consulta de Firestore y la interfaz se actualiza automáticamente.
 - **Seguridad en el servidor.** Las reglas de Firestore (`firestore.rules`) verifican que `userId` coincida con el usuario autenticado para leer, crear, editar o borrar, y validan la forma de cada tarea. El filtro por `userId` en el frontend no es la única protección.
 - **Carpeta `api/` en lugar de `functions/`.** Vercel solo detecta funciones dentro de `api/`, por eso el endpoint de email vive ahí.
-- **El endpoint de email no confía en el navegador.** El frontend envía el *ID token* de Firebase; la función lo verifica con las llaves públicas de Google (librería `jose`) y envía el correo únicamente a la dirección que contiene el token. Así nadie puede usar el endpoint para enviar correos a terceros.
+- **El endpoint de email no confía en el navegador.** El frontend envía el _ID token_ de Firebase; la función lo verifica con las llaves públicas de Google (librería `jose`) y envía el correo únicamente a la dirección que contiene el token. Así nadie puede usar el endpoint para enviar correos a terceros.
 - **Verificación del correo bajo demanda (sandbox de SES).** En lugar de verificar solo en el formulario de registro, la app consulta el estado al entrar a "Mis tareas". Así funciona igual para registros con correo, para inicios de sesión con Google y para cuentas existentes. Toda la lógica de AWS vive en el servidor (`/api/email-verification`), y cada usuario solo puede verificar su propio correo (sale del token verificado).
 - **Código compartido entre funciones** en `api/_lib/` (verificación del token, cliente SES, respuestas HTTP) para no duplicar lógica.
 - **Imports con extensión `.js` en `api/`.** El proyecto usa `"type": "module"`, y Node.js en modo ES Modules exige la extensión en los imports locales.
@@ -124,39 +124,40 @@ npm run dev            # http://localhost:5173
 ```
 
 Configuración en Firebase:
+
 1. Crear un proyecto y registrar una app web.
-2. En **Authentication**, habilitar los proveedores *Correo electrónico/contraseña* y *Google*.
-3. Crear la base de datos **Firestore** y publicar el contenido de `firestore.rules` en la pestaña *Reglas*.
+2. En **Authentication**, habilitar los proveedores _Correo electrónico/contraseña_ y _Google_.
+3. Crear la base de datos **Firestore** y publicar el contenido de `firestore.rules` en la pestaña _Reglas_.
 4. Si se despliega, agregar el dominio de Vercel en **Authentication → Configuración → Dominios autorizados**.
 
 > `npm run dev` levanta solo el frontend. La función `/api/send-summary` se ejecuta en Vercel (o localmente con `vercel dev`).
 
 ### Scripts
 
-| Comando | Descripción |
-|---|---|
-| `npm run dev` | Servidor de desarrollo |
-| `npm run build` | Chequeo de tipos y build de producción |
-| `npm test` | Ejecuta todos los tests una vez |
-| `npm run test:watch` | Tests en modo observación |
-| `npm run lint` | Linter (oxlint) |
+| Comando              | Descripción                            |
+| -------------------- | -------------------------------------- |
+| `npm run dev`        | Servidor de desarrollo                 |
+| `npm run build`      | Chequeo de tipos y build de producción |
+| `npm test`           | Ejecuta todos los tests una vez        |
+| `npm run test:watch` | Tests en modo observación              |
+| `npm run lint`       | Linter (oxlint)                        |
 
 ## Variables de entorno
 
 Plantilla en `.env.example`. El archivo `.env` está en `.gitignore` y nunca se sube al repositorio.
 
-| Variable | Dónde se usa | Descripción |
-|---|---|---|
-| `VITE_FIREBASE_API_KEY` | Frontend | Configuración de la app web de Firebase |
-| `VITE_FIREBASE_AUTH_DOMAIN` | Frontend | Dominio de autenticación |
-| `VITE_FIREBASE_PROJECT_ID` | Frontend y función | ID del proyecto (la función lo usa para verificar el token) |
-| `VITE_FIREBASE_STORAGE_BUCKET` | Frontend | Bucket del proyecto |
-| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Frontend | ID de remitente |
-| `VITE_FIREBASE_APP_ID` | Frontend | ID de la app |
-| `SES_REGION` | Función | Región de AWS SES (ej. `us-east-2`) |
-| `SES_ACCESS_KEY_ID` | Función | Access key de un usuario IAM con permisos de SES |
-| `SES_SECRET_ACCESS_KEY` | Función | Clave secreta de ese usuario |
-| `SES_FROM_EMAIL` | Función | Remitente verificado en SES |
+| Variable                            | Dónde se usa       | Descripción                                                 |
+| ----------------------------------- | ------------------ | ----------------------------------------------------------- |
+| `VITE_FIREBASE_API_KEY`             | Frontend           | Configuración de la app web de Firebase                     |
+| `VITE_FIREBASE_AUTH_DOMAIN`         | Frontend           | Dominio de autenticación                                    |
+| `VITE_FIREBASE_PROJECT_ID`          | Frontend y función | ID del proyecto (la función lo usa para verificar el token) |
+| `VITE_FIREBASE_STORAGE_BUCKET`      | Frontend           | Bucket del proyecto                                         |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Frontend           | ID de remitente                                             |
+| `VITE_FIREBASE_APP_ID`              | Frontend           | ID de la app                                                |
+| `SES_REGION`                        | Función            | Región de AWS SES (ej. `us-east-2`)                         |
+| `SES_ACCESS_KEY_ID`                 | Función            | Access key de un usuario IAM con permisos de SES            |
+| `SES_SECRET_ACCESS_KEY`             | Función            | Clave secreta de ese usuario                                |
+| `SES_FROM_EMAIL`                    | Función            | Remitente verificado en SES                                 |
 
 - Solo las variables con prefijo `VITE_` llegan al navegador. Las de SES no lo llevan a propósito, para que nunca queden expuestas.
 - Las variables de SES no se llaman `AWS_...` porque Vercel reserva esos nombres.
