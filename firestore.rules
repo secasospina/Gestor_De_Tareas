@@ -7,10 +7,19 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Campos permitidos en una tarea: cualquier otro campo se rechaza
+    // (evita que se guarden datos extra o basura en los documentos).
+    function hasOnlyAllowedFields(data) {
+      return data.keys().hasOnly(['userId', 'title', 'description', 'completed', 'createdAt', 'updatedAt'])
+        && data.keys().hasAll(['userId', 'title', 'description', 'completed', 'createdAt', 'updatedAt']);
+    }
+
     // Valida la forma de una tarea (los límites coinciden con src/utils/tasks.ts).
+    // trim() evita que un título de solo espacios pase la validación.
     function isValidTask(data) {
-      return data.title is string
-        && data.title.size() > 0
+      return hasOnlyAllowedFields(data)
+        && data.title is string
+        && data.title.trim().size() > 0
         && data.title.size() <= 100
         && data.description is string
         && data.description.size() <= 500
@@ -22,15 +31,21 @@ service cloud.firestore {
       allow read, delete: if request.auth != null
         && resource.data.userId == request.auth.uid;
 
-      // Crear: el userId de la tarea nueva debe ser el del propio usuario.
+      // Crear: el userId debe ser el del propio usuario y las fechas deben ser
+      // la hora del servidor (el cliente usa serverTimestamp(), no puede inventarlas).
       allow create: if request.auth != null
         && request.resource.data.userId == request.auth.uid
-        && isValidTask(request.resource.data);
+        && isValidTask(request.resource.data)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
 
-      // Editar: debe ser el dueño y no puede cambiar el userId a otra persona.
+      // Editar: debe ser el dueño, no puede cambiar el userId ni la fecha de
+      // creación, y la fecha de actualización debe ser la hora del servidor.
       allow update: if request.auth != null
         && resource.data.userId == request.auth.uid
         && request.resource.data.userId == resource.data.userId
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time
         && isValidTask(request.resource.data);
     }
   }
