@@ -34,7 +34,7 @@ export function AuthLayout({ title, subtitle, backLink, children }: AuthLayoutPr
           <div className="brand-mark">
             <LogoIcon size={30} />
           </div>
-          <h1 className="hero-title">Bienvenido al Gestor de Tareas</h1>
+          <h1 className="hero-title">Te damos la bienvenida al Gestor de Tareas</h1>
           <p className="hero-text">Organiza tu día, enfócate en lo importante y no olvides nada.</p>
 
           {/* Lista de beneficios: solo se muestra en pantallas grandes. */}

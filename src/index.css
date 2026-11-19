@@ -1101,3 +1101,73 @@ select:focus {
     max-width: 420px;
   }
 }
+
+/* ===== Sombras =====
+   Escala de sombras en capas: una sombra corta y nítida (contacto) más una
+   larga y difusa (ambiente). Así los elementos parecen "flotar" de forma natural. */
+:root {
+  --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.08);
+  --shadow: 0 2px 4px rgb(16 24 40 / 0.04), 0 8px 24px rgb(16 24 40 / 0.08);
+  --shadow-lg: 0 4px 8px rgb(16 24 40 / 0.05), 0 20px 48px rgb(16 24 40 / 0.14);
+  --shadow-primary: 0 4px 14px rgb(79 70 229 / 0.35);
+}
+
+/* En modo oscuro las sombras necesitan más opacidad para notarse. */
+:root[data-theme='dark'] {
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4), 0 1px 3px rgb(0 0 0 / 0.3);
+  --shadow: 0 2px 4px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.35);
+  --shadow-lg: 0 4px 8px rgb(0 0 0 / 0.35), 0 20px 48px rgb(0 0 0 / 0.5);
+  --shadow-primary: 0 4px 14px rgb(129 140 248 / 0.3);
+}
+
+/* Botón principal: sombra suave y un "brillo" del color de acento al pasar el mouse. */
+button:not(.btn-secondary):not(.btn-ghost):not(.icon-btn):not(.filter-btn) {
+  box-shadow: var(--shadow-sm);
+}
+
+button:not(.btn-secondary):not(.btn-ghost):not(.icon-btn):not(.filter-btn):hover:not(:disabled) {
+  box-shadow: var(--shadow-primary);
+}
+
+.btn-secondary,
+.icon-btn {
+  box-shadow: var(--shadow-sm);
+}
+
+/* Tarjeta de login/registro: la más elevada de la app. */
+.auth-card {
+  box-shadow: var(--shadow-lg);
+}
+
+/* Encabezado fijo: sombra sutil para separarlo del contenido al hacer scroll. */
+.app-header {
+  box-shadow: var(--shadow-sm);
+}
+
+.notice {
+  box-shadow: var(--shadow-sm);
+}
+
+/* Cada tarea se eleva un poco al pasar el mouse, invitando a interactuar. */
+.todo-item {
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color 0.15s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.todo-item:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+
+/* Mientras se edita, la tarea no se mueve (evita saltos al escribir). */
+.todo-item:has(form):hover {
+  transform: none;
+}
+
+.stat {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+}
