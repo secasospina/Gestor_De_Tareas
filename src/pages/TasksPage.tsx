@@ -10,8 +10,8 @@ import { useTasks } from '../hooks/useTasks'
 import { useEmailVerification } from '../hooks/useEmailVerification'
 import { logout } from '../services/auth.service'
 import { sendTasksSummary } from '../services/email.service'
-import { filterTasks, getTaskSummary } from '../utils/tasks'
-import type { TaskFilter } from '../types/task'
+import { filterTasks, getTaskSummary, sortTasks } from '../utils/tasks'
+import type { TaskFilter, TaskSort } from '../types/task'
 import { TodoForm } from '../components/TodoForm'
 import { TodoList } from '../components/TodoList'
 import { TaskFilters } from '../components/TaskFilters'
@@ -34,7 +34,9 @@ export function TasksPage() {
   const summary = getTaskSummary(tasks)
   // Filtro activo de la lista (solo afecta lo que se muestra, no los datos).
   const [filter, setFilter] = useState<TaskFilter>('all')
-  const visibleTasks = filterTasks(tasks, filter)
+  // Criterio de orden; por defecto, las más importantes primero.
+  const [sort, setSort] = useState<TaskSort>('priority')
+  const visibleTasks = sortTasks(filterTasks(tasks, filter), sort)
   const emptyMessages: Record<TaskFilter, string> = {
     all: 'No tienes tareas todavía. ¡Crea la primera!',
     pending: 'No tienes tareas pendientes. ¡Buen trabajo!',
@@ -182,7 +184,26 @@ export function TasksPage() {
             </p>
           ) : (
             <>
-              {tasks.length > 0 && <TaskFilters value={filter} onChange={setFilter} summary={summary} />}
+              {tasks.length > 0 && (
+                <div className="list-toolbar">
+                  <TaskFilters value={filter} onChange={setFilter} summary={summary} />
+                  <label className="sort-control">
+                    Ordenar por
+                    <select
+                      value={sort}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        // Solo aceptamos valores conocidos (sin usar "as" para forzar el tipo).
+                        if (value === 'priority' || value === 'dueDate' || value === 'newest') setSort(value)
+                      }}
+                    >
+                      <option value="priority">Prioridad</option>
+                      <option value="dueDate">Fecha de vencimiento</option>
+                      <option value="newest">Más recientes</option>
+                    </select>
+                  </label>
+                </div>
+              )}
               <TodoList
                 tasks={visibleTasks}
                 onToggle={toggleTask}

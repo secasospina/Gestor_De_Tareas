@@ -20,6 +20,7 @@ import {
 import type { Timestamp, Unsubscribe } from 'firebase/firestore'
 import { db } from './firebase'
 import type { Task, TaskInput } from '../types/task'
+import { isValidPriority } from '../utils/tasks'
 
 const TASKS_COLLECTION = 'tasks'
 const tasksRef = collection(db, TASKS_COLLECTION)
@@ -51,6 +52,10 @@ export function subscribeToUserTasks(
           title: data.title as string,
           description: (data.description as string) ?? '',
           completed: Boolean(data.completed),
+          // Las tareas creadas antes de existir estos campos no los tienen:
+          // les damos valores por defecto para que sigan funcionando.
+          priority: isValidPriority(data.priority) ? data.priority : 'medium',
+          dueDate: typeof data.dueDate === 'string' ? data.dueDate : null,
           createdAt: (data.createdAt as Timestamp | null)?.toDate() ?? null,
         }
       })
@@ -66,6 +71,8 @@ export async function createTask(userId: string, input: TaskInput): Promise<void
     userId,
     title: input.title,
     description: input.description,
+    priority: input.priority,
+    dueDate: input.dueDate,
     completed: false,
     // serverTimestamp usa la hora del servidor, no la del computador del usuario.
     createdAt: serverTimestamp(),
@@ -73,11 +80,13 @@ export async function createTask(userId: string, input: TaskInput): Promise<void
   })
 }
 
-/** Actualiza el título y la descripción de una tarea. */
+/** Actualiza los datos editables de una tarea (título, descripción, prioridad y fecha). */
 export async function updateTask(taskId: string, input: TaskInput): Promise<void> {
   await updateDoc(doc(db, TASKS_COLLECTION, taskId), {
     title: input.title,
     description: input.description,
+    priority: input.priority,
+    dueDate: input.dueDate,
     updatedAt: serverTimestamp(),
   })
 }

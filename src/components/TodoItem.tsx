@@ -6,7 +6,8 @@
  */
 import { useState } from 'react'
 import { TodoForm } from './TodoForm'
-import { PencilIcon, TrashIcon } from './icons'
+import { CalendarIcon, PencilIcon, TrashIcon } from './icons'
+import { PRIORITY_LABELS, formatDueDate, isOverdue } from '../utils/tasks'
 import type { Task, TaskInput } from '../types/task'
 
 interface TodoItemProps {
@@ -20,6 +21,8 @@ export function TodoItem({ task, onToggle, onEdit, onDelete }: TodoItemProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [busy, setBusy] = useState(false)
+  // Vencida = no completada y con fecha anterior a hoy.
+  const overdue = isOverdue(task)
 
   /** Ejecuta una acción mostrando estado ocupado; los errores los muestra la página. */
   async function runAction(action: () => Promise<void>) {
@@ -38,7 +41,12 @@ export function TodoItem({ task, onToggle, onEdit, onDelete }: TodoItemProps) {
     return (
       <li className="todo-item">
         <TodoForm
-          initialValues={{ title: task.title, description: task.description }}
+          initialValues={{
+            title: task.title,
+            description: task.description,
+            priority: task.priority,
+            dueDate: task.dueDate,
+          }}
           submitLabel="Guardar cambios"
           onCancel={() => setIsEditing(false)}
           onSubmit={async (input) => {
@@ -63,6 +71,18 @@ export function TodoItem({ task, onToggle, onEdit, onDelete }: TodoItemProps) {
         <span className="todo-text">
           <span className="todo-title">{task.title}</span>
           {task.description && <span className="todo-description">{task.description}</span>}
+
+          {/* Etiquetas de prioridad y fecha de vencimiento. */}
+          <span className="todo-meta">
+            <span className={`badge priority-${task.priority}`}>Prioridad {PRIORITY_LABELS[task.priority]}</span>
+            {task.dueDate && (
+              <span className={`badge due ${overdue ? 'is-overdue' : ''}`}>
+                <CalendarIcon size={13} />
+                {overdue ? 'Vencida · ' : 'Vence '}
+                {formatDueDate(task.dueDate)}
+              </span>
+            )}
+          </span>
         </span>
       </label>
 

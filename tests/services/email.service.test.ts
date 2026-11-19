@@ -18,7 +18,16 @@ import { checkEmailVerification, sendTasksSummary } from '../../src/services/ema
 import type { Task } from '../../src/types/task'
 
 const tasks: Task[] = [
-  { id: '1', userId: 'u1', title: 'Tarea', description: 'secreta', completed: false, createdAt: null },
+  {
+    id: '1',
+    userId: 'u1',
+    title: 'Tarea',
+    description: 'secreta',
+    completed: false,
+    priority: 'medium',
+    dueDate: null,
+    createdAt: null,
+  },
 ]
 
 describe('sendTasksSummary', () => {

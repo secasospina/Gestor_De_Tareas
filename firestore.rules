@@ -9,15 +9,26 @@ service cloud.firestore {
 
     // Campos permitidos en una tarea: cualquier otro campo se rechaza
     // (evita que se guarden datos extra o basura en los documentos).
+    // priority y dueDate son opcionales para que las tareas creadas antes
+    // de existir esos campos se puedan seguir editando.
     function hasOnlyAllowedFields(data) {
-      return data.keys().hasOnly(['userId', 'title', 'description', 'completed', 'createdAt', 'updatedAt'])
+      return data.keys().hasOnly(['userId', 'title', 'description', 'completed', 'priority', 'dueDate', 'createdAt', 'updatedAt'])
         && data.keys().hasAll(['userId', 'title', 'description', 'completed', 'createdAt', 'updatedAt']);
+    }
+
+    // Si vienen priority o dueDate, deben tener un valor válido.
+    function hasValidOptionalFields(data) {
+      return (!('priority' in data) || data.priority in ['low', 'medium', 'high'])
+        && (!('dueDate' in data)
+          || data.dueDate == null
+          || (data.dueDate is string && data.dueDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')));
     }
 
     // Valida la forma de una tarea (los límites coinciden con src/utils/tasks.ts).
     // trim() evita que un título de solo espacios pase la validación.
     function isValidTask(data) {
       return hasOnlyAllowedFields(data)
+        && hasValidOptionalFields(data)
         && data.title is string
         && data.title.trim().size() > 0
         && data.title.size() <= 100

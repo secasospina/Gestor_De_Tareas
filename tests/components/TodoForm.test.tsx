@@ -28,7 +28,12 @@ describe('TodoForm', () => {
     await user.type(screen.getByLabelText('Descripción'), 'En la tienda')
     await user.click(screen.getByRole('button', { name: 'Agregar tarea' }))
 
-    expect(onSubmit).toHaveBeenCalledWith({ title: 'Comprar pan', description: 'En la tienda' })
+    expect(onSubmit).toHaveBeenCalledWith({
+      title: 'Comprar pan',
+      description: 'En la tienda',
+      priority: 'medium',
+      dueDate: null,
+    })
     expect(screen.getByLabelText('Título')).toHaveValue('')
   })
 
@@ -38,7 +43,7 @@ describe('TodoForm', () => {
     render(
       <TodoForm
         onSubmit={vi.fn().mockResolvedValue(undefined)}
-        initialValues={{ title: 'Tarea vieja', description: 'Detalle' }}
+        initialValues={{ title: 'Tarea vieja', description: 'Detalle', priority: 'low', dueDate: null }}
         submitLabel="Guardar cambios"
         onCancel={onCancel}
       />,
@@ -78,5 +83,23 @@ describe('TodoForm', () => {
     expect(onSubmit).toHaveBeenCalledOnce()
 
     finishSave()
+  })
+
+  it('envía la prioridad y la fecha de vencimiento elegidas', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn().mockResolvedValue(undefined)
+    render(<TodoForm onSubmit={onSubmit} />)
+
+    await user.type(screen.getByLabelText('Título'), 'Entregar proyecto')
+    await user.selectOptions(screen.getByLabelText('Prioridad'), 'high')
+    await user.type(screen.getByLabelText('Fecha de vencimiento (opcional)'), '2026-11-19')
+    await user.click(screen.getByRole('button', { name: 'Agregar tarea' }))
+
+    expect(onSubmit).toHaveBeenCalledWith({
+      title: 'Entregar proyecto',
+      description: '',
+      priority: 'high',
+      dueDate: '2026-11-19',
+    })
   })
 })

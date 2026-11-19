@@ -14,6 +14,8 @@ const tasks: Task[] = [
     title: 'Pagar factura',
     description: 'Internet',
     completed: false,
+    priority: 'high',
+    dueDate: '2020-01-01',
     createdAt: new Date('2026-01-02'),
   },
   {
@@ -22,6 +24,8 @@ const tasks: Task[] = [
     title: 'Lavar loza',
     description: '',
     completed: true,
+    priority: 'low',
+    dueDate: null,
     createdAt: new Date('2026-01-01'),
   },
 ]
@@ -82,6 +86,17 @@ describe('TodoList', () => {
     await user.type(titleInput, 'Pagar factura de luz')
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
 
-    expect(onEdit).toHaveBeenCalledWith('1', { title: 'Pagar factura de luz', description: 'Internet' })
+    expect(onEdit).toHaveBeenCalledWith('1', {
+      title: 'Pagar factura de luz',
+      description: 'Internet',
+      priority: 'high',
+      dueDate: '2020-01-01',
+    })
+  })
+
+  it('muestra la prioridad y marca como vencida una tarea con fecha pasada', () => {
+    renderList([tasks[0]])
+    expect(screen.getByText('Prioridad Alta')).toBeInTheDocument()
+    expect(screen.getByText(/Vencida/)).toBeInTheDocument()
   })
 })
