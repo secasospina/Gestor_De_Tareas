@@ -3,7 +3,7 @@
  * Reutiliza la configuración de Vite (plugin de React) y le agrega la de testing.
  */
 import { defineConfig, mergeConfig } from 'vitest/config'
-import viteConfig from './vite.config'
+import viteConfig from './vite.config.ts'
 
 export default mergeConfig(
   viteConfig,

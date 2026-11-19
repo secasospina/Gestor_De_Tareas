@@ -34,6 +34,14 @@ describe('validateTaskInput', () => {
     expect(validateTaskInput({ title: '   ', description: '' }).title).toBe('El título es obligatorio.')
   })
 
+  it('acepta los límites exactos de longitud (100 y 500 caracteres)', () => {
+    const errors = validateTaskInput({
+      title: 'a'.repeat(TITLE_MAX_LENGTH),
+      description: 'a'.repeat(DESCRIPTION_MAX_LENGTH),
+    })
+    expect(errors).toEqual({})
+  })
+
   it('rechaza un título demasiado largo', () => {
     const errors = validateTaskInput({ title: 'a'.repeat(TITLE_MAX_LENGTH + 1), description: '' })
     expect(errors.title).toMatch(/no puede superar/)

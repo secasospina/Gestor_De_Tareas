@@ -60,4 +60,23 @@ describe('TodoForm', () => {
 
     expect(screen.getByLabelText('Título')).toHaveValue('No perder esto')
   })
+
+  it('evita el doble envío mientras se está guardando', async () => {
+    const user = userEvent.setup()
+    // Promesa que no se resuelve hasta que lo decidimos: simula un guardado lento.
+    let finishSave: () => void = () => {}
+    const onSubmit = vi.fn(() => new Promise<void>((resolve) => (finishSave = resolve)))
+    render(<TodoForm onSubmit={onSubmit} />)
+
+    await user.type(screen.getByLabelText('Título'), 'Tarea lenta')
+    await user.click(screen.getByRole('button', { name: 'Agregar tarea' }))
+
+    // Mientras guarda, el botón queda deshabilitado y no se puede enviar otra vez.
+    const savingButton = screen.getByRole('button', { name: 'Guardando...' })
+    expect(savingButton).toBeDisabled()
+    await user.click(savingButton)
+    expect(onSubmit).toHaveBeenCalledOnce()
+
+    finishSave()
+  })
 })

@@ -12,6 +12,12 @@ describe('escapeHtml', () => {
   })
 })
 
+describe('escapeHtml con &', () => {
+  it('escapa el & primero, sin escapar dos veces las entidades', () => {
+    expect(escapeHtml('<b>&amp;</b>')).toBe('&lt;b&gt;&amp;amp;&lt;/b&gt;')
+  })
+})
+
 describe('buildSummaryEmail', () => {
   const tasks = [
     { title: 'Pagar factura', completed: false },
