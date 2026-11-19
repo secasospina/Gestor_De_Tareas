@@ -33,6 +33,12 @@ async function postWithAuth<T>(path: string, body: unknown, fallbackError: strin
     throw new Error('Error de conexión. Revisa tu internet.')
   }
 
+  // 404 = la función no existe en este entorno. Pasa con `npm run dev`, porque
+  // Vite solo sirve el frontend; las funciones de api/ corren en Vercel (o con `vercel dev`).
+  if (response.status === 404) {
+    throw new Error('El servicio de email no está disponible en este entorno. Funciona en la versión publicada en Vercel.')
+  }
+
   const data = (await response.json().catch(() => ({}))) as T & { error?: string }
   if (!response.ok) throw new Error(data.error ?? fallbackError)
   return data

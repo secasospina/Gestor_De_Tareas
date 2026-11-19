@@ -88,4 +88,10 @@ describe('checkEmailVerification', () => {
 
     await expect(checkEmailVerification()).rejects.toThrow('Error de conexión. Revisa tu internet.')
   })
+
+  it('explica que el servicio no existe en este entorno si responde 404', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('Not Found', { status: 404 }))
+
+    await expect(checkEmailVerification()).rejects.toThrow(/no está disponible en este entorno/)
+  })
 })
