@@ -183,14 +183,14 @@ El proyecto está conectado a Vercel desde GitHub: cada push a `main` despliega 
 
 ## Uso de IA en el proceso de trabajo
 
-<!-- Pendiente: sección por completar. -->
+El proyecto se desarrolló con apoyo de **Claude** como herramienta de aprendizaje y colaboración: para planear el trabajo a partir de la consigna, entender conceptos nuevos, proponer la arquitectura, generar código comentado y diagnosticar errores. Las decisiones de alcance, diseño y experiencia de usuario, la configuración de los servicios externos y la validación de cada cambio (build, tests y pruebas en producción) estuvieron a cargo del autor. La [documentación del uso de IA](docs/uso-de-ia.md) describe ese proceso, los patrones de uso y las consultas más relevantes.
 
 ## Posibles mejoras
 
 - Filtros por estado (todas, pendientes, completadas).
 - Reordenar tareas con drag & drop (dnd-kit).
 - Fechas de vencimiento y prioridad.
-- Salir del sandbox de SES y usar un dominio propio como remitente.
+- Salir del sandbox de SES y usar un dominio propio como remitente; en ese momento, exigir `email_verified` en el token (verificación de Firebase) y agregar un límite de envíos por usuario.
 
 ## Autor
 

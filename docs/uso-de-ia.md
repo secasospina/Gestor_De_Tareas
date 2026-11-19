@@ -64,11 +64,18 @@ Solicitud de revisión crítica de las reglas de seguridad implementadas, en bus
 
 Evaluación de los riesgos residuales del diseño de la Vercel Function (verificación del token, validación del payload y manejo de credenciales).
 
+**Resultado:** la IA confirmó que el diseño es sólido y señaló dos riesgos residuales, que se analizaron frente al contexto real del proyecto:
+
+- **`email_verified` no se exige.** Con registro por correo y contraseña, alguien podría registrarse con un correo ajeno. En este proyecto el riesgo está mitigado por el sandbox de SES: ningún resumen llega a una dirección hasta que su dueño confirma el correo de verificación de AWS. Exigir `email_verified` ahora bloquearía a los usuarios registrados con contraseña, porque requeriría además el flujo de verificación de Firebase (un segundo correo). Queda como mejora necesaria al salir del sandbox.
+- **No hay límite de frecuencia.** Hoy el sandbox impone 200 correos al día y 1 por segundo. Si la app escalara, se agregaría un límite por usuario guardado en un almacén compartido (por ejemplo, la fecha del último envío en Firestore), ya que las funciones serverless no comparten memoria entre instancias.
+
 ![Revisión de seguridad de la Vercel Function de email](capturas/uso-ia/03-revision-seguridad-endpoint.png)
 
 ### 4. Diagnóstico del error en producción
 
 Confirmación, con base en la documentación de Node.js, de la causa identificada (imports sin extensión en modo ES Modules) y de alternativas para detectarla en compilación.
+
+**Resultado:** la IA confirmó el diagnóstico citando la documentación de Node.js: en ES Modules los imports relativos se resuelven como URLs y no se "adivinan" extensiones (a diferencia de `require` en CommonJS). El build local no lo detectaba porque `vite build` solo empaqueta el frontend (la carpeta `api/` la compila Vercel aparte) y la plantilla usa `"moduleResolution": "bundler"`, que no exige extensiones. Se mantuvo la corrección con `.js`, documentada con un comentario en el código.
 
 ![Diagnóstico del error de imports ESM en Vercel](capturas/uso-ia/04-diagnostico-esm-vercel.png)
 
@@ -76,10 +83,19 @@ Confirmación, con base en la documentación de Node.js, de la causa identificad
 
 Evaluación de la decisión de verificar el correo de cada usuario bajo demanda: límites, riesgos y cambios al pasar a producción.
 
+**Resultado:** la IA consideró la decisión razonable para el contexto de evaluación y confirmó con la documentación de AWS los límites del sandbox (200 correos cada 24 horas, 1 por segundo y hasta 10.000 identidades por región) y que la verificación expira a las 24 horas, lo que coincide con la lógica de borrar y volver a crear la identidad. También señaló una implicación importante: en SES, verificar una dirección la habilita como **remitente**, no solo como destinatario. En este proyecto eso está acotado porque el remitente es siempre fijo (`SES_FROM_EMAIL`) y las credenciales solo existen en el servidor. Como mejora de mínimo privilegio, la política IAM podría restringir `ses:SendEmail` a ese remitente con la condición `ses:FromAddress`. Al pasar a producción con un dominio propio, el flujo de verificación por usuario dejaría de ser necesario y esas identidades se eliminarían.
+
 ![Evaluación de la decisión sobre el sandbox de AWS SES](capturas/uso-ia/05-decision-sandbox-ses.png)
 
 ### 6. Revisión de la cobertura de tests
 
 Revisión de la suite de tests existente para identificar casos borde faltantes y cómo probar las Vercel Functions sin servicios externos.
+
+**Resultado:** al contrastar las sugerencias con la suite, varias ya estaban cubiertas (título de solo espacios, código de error desconocido, resumen vacío, tarea sin fecha y conservar el formulario si falla el guardado). Se agregaron las que faltaban:
+
+- Límites exactos de longitud (100 y 500 caracteres aceptados).
+- Escape de `&` sin doble escape en el HTML del email.
+- Prevención del doble envío en `TodoForm` mientras se guarda.
+- **Tests de la Vercel Function `/api/send-summary`** con la verificación del token y el cliente de SES simulados: sin token (401), token inválido (401), payload inválido (400), envío al correo del token aunque el cliente intente indicar otro destinatario (200) y rechazo de SES por correo no verificado (403).
 
 ![Revisión de la cobertura de tests](capturas/uso-ia/06-revision-cobertura-tests.png)
